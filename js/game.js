@@ -107,6 +107,7 @@
     const f = feature || randomFeature();
     state.feature = f;
     state.busy = false;
+    document.querySelectorAll('.drag-ghost').forEach(n => n.remove());
 const rounds = buildRounds(f.key, EACH_SIDE, GROUPS);
 
     state.training   = rounds.training;
@@ -136,6 +137,10 @@ const rounds = buildRounds(f.key, EACH_SIDE, GROUPS);
   function paintTrain() {
     const animal = state.training[state.trainIndex];
     if (!animal) return;
+
+    // Safety net: no dragged emoji may survive into the next animal.
+    document.querySelectorAll('.drag-ghost').forEach(n => n.remove());
+
     ui.trainEmoji.textContent = animal.emoji;
     ui.trainName.textContent  = animal.name;
     ui.trainCount.textContent = (state.trainIndex + 1) + ' / ' + TRAINING_SIZE;
@@ -418,14 +423,15 @@ setTimeout(() => {
   function initDragAndDrop() {
     const card = ui.trainAnimal;
     let ghost = null;
-    let startX = 0, startY = 0, dragging = false;
+    let startX = 0, startY = 0, active = false, dragging = false;
 
     function makeGhost(emoji) {
-      ghost = document.createElement('div');
-      ghost.className = 'drag-ghost';
-      ghost.textContent = emoji;
-      document.body.appendChild(ghost);
-    }
+    removeGhost();                       // never let ghosts stack up
+    ghost = document.createElement('div');
+    ghost.className = 'drag-ghost';
+    ghost.textContent = emoji;
+    document.body.appendChild(ghost);
+  }
 
     function moveGhost(x, y) {
       if (ghost) {
@@ -443,45 +449,63 @@ setTimeout(() => {
       return null;
     }
 
-    function clearGhost() {
+    /* Always wipes every trace of a drag, including any stray ghost left
+       behind by an earlier gesture. Called on every way out of a drag. */
+    function removeGhost() {
       if (ghost) { ghost.remove(); ghost = null; }
+      document.querySelectorAll('.drag-ghost').forEach(n => n.remove());
       card.classList.remove('is-dragging');
       ui.zoneYes.classList.remove('is-over');
       ui.zoneNo.classList.remove('is-over');
     }
 
+    /* We listen on window, NOT on the card. Pointer capture is unreliable on
+       some phones — when it fails, `pointerup` is delivered to whatever is
+       under the finger (the Yes/No box, or the page) and a card-only
+       listener would never fire. That left the dragged emoji stuck on the
+       screen forever. Listening on the window makes the drop work, and the
+       cleanup work, on every device. */
     card.addEventListener('pointerdown', (e) => {
-      // Only respond to the primary button / single touch.
-      if (e.button !== undefined && e.button !== 0) return;
-      startX = e.clientX; startY = e.clientY;
+      if (e.button !== undefined && e.button !== 0) return;  // primary button / first finger only
+      if (e.isPrimary === false) return;
+      removeGhost();
+      startX = e.clientX;
+      startY = e.clientY;
+      active = true;
       dragging = false;
-      card.setPointerCapture(e.pointerId);
+      try { card.setPointerCapture(e.pointerId); } catch (err) { /* not fatal */ }
     });
 
-    card.addEventListener('pointermove', (e) => {
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const far = Math.hypot(dx, dy) > 8;
+    window.addEventListener('pointermove', (e) => {
+      if (!active) return;
+      const far = Math.hypot(e.clientX - startX, e.clientY - startY) > 8;
 
       if (far && !dragging) {
         dragging = true;
         card.classList.add('is-dragging');
         makeGhost(ui.trainEmoji.textContent);
       }
-      if (dragging) {
-        moveGhost(e.clientX, e.clientY);
-        const z = hitZone(e.clientX, e.clientY);
-        ui.zoneYes.classList.toggle('is-over', z === ui.zoneYes);
-        ui.zoneNo.classList.toggle('is-over', z === ui.zoneNo);
-      }
-    });
+      if (!dragging) return;
+
+      if (e.cancelable) e.preventDefault();
+      moveGhost(e.clientX, e.clientY);
+      const z = hitZone(e.clientX, e.clientY);
+      ui.zoneYes.classList.toggle('is-over', z === ui.zoneYes);
+      ui.zoneNo.classList.toggle('is-over', z === ui.zoneNo);
+    }, { passive: false });
 
     function endDrag(e) {
-      if (dragging) {
-        const z = hitZone(e.clientX, e.clientY);
-        clearGhost();
-        dragging = false;
-        if (z) submitTrainingAnswer(z.dataset.answer);
+      if (!active) return;
+
+      const wasDragging = dragging;
+      const zone = wasDragging ? hitZone(e.clientX, e.clientY) : null;
+
+      active = false;
+      dragging = false;
+      removeGhost();                       // <- always, drop or no drop
+
+      if (wasDragging) {
+        if (zone) submitTrainingAnswer(zone.dataset.answer);
       } else {
         // A tap/click (not a drag): toggle "selected" for tap-to-answer.
         const wasSelected = card.classList.contains('is-selected');
@@ -492,8 +516,12 @@ setTimeout(() => {
       }
     }
 
-    card.addEventListener('pointerup', endDrag);
-    card.addEventListener('pointercancel', () => { clearGhost(); dragging = false; });
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', () => {
+      active = false;
+      dragging = false;
+      removeGhost();
+    });
 
     // Tap the boxes directly (works for tap-to-answer and keyboard).
     ui.zoneYes.addEventListener('click', () => submitTrainingAnswer('yes'));
