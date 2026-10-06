@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="Train a pretend AI to sort animals by fur, fly or water. A free classroom game for kids.">
+<meta name="theme-color" content="#ffe9f3">
+<title>AI Animal Sorter — Become an AI Trainer!</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <span class="cloud cloud-1"></span>
+  <span class="cloud cloud-2"></span>
+  <span class="cloud cloud-3"></span>
+  <span class="star star-1">⭐</span>
+  <span class="star star-2">✨</span>
+  <span class="star star-3">🌟</span>
+  <span class="star star-4">⭐</span>
+  <span class="star star-5">✨</span>
+</div>
+
+<main class="app">
+
+  <!-- ============ WELCOME ============ -->
+  <section class="screen is-active" id="screen-welcome">
+    <div class="card card--welcome">
+      <h1 class="title">
+        <span class="title__emoji">🤖</span>
+        AI Animal Sorter
+      </h1>
+      <p class="subtitle">Train a robot to sort animals!</p>
+
+      <div class="row row--bounce" aria-hidden="true">
+        <span class="bubble">🐱</span>
+        <span class="bubble">🦇</span>
+        <span class="bubble">🐬</span>
+        <span class="bubble">🦋</span>
+        <span class="bubble">🐢</span>
+      </div>
+
+      <ol class="steps">
+        <li><span class="steps__num">1</span> <strong>Train</strong> — help the AI by sorting animals into Yes / No</li>
+        <li><span class="steps__num">2</span> <strong>Watch</strong> — the AI sorts new animals by itself</li>
+        <li><span class="steps__num">3</span> <strong>Judge</strong> — tell the AI if it was right or wrong</li>
+      </ol>
+
+      <button class="btn btn--big btn--rainbow" id="btn-start">🚀 Become an AI Trainer!</button>
+      <p class="tiny">No login · No ads · Works offline</p>
+    </div>
+  </section>
+
+  <!-- ============ TRAINING ============ -->
+  <section class="screen" id="screen-train">
+    <div class="card">
+
+      <div class="topbar">
+        <span class="tag tag--pink" id="train-phase">Step 1 of 2 · Training</span>
+        <span class="count" id="train-count">1 / 6</span>
+      </div>
+
+      <div class="progress" role="progressbar" aria-label="Training progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="train-progressbar">
+        <div class="progress__fill" id="train-progress"></div>
+      </div>
+
+      <h2 class="question" id="train-question">Does this animal have fur?</h2>
+
+      <div class="stage">
+        <div class="animal-card" id="train-animal" tabindex="0" role="button" aria-label="Animal to sort">
+          <span class="animal-card__emoji" id="train-emoji">🐱</span>
+          <span class="animal-card__name" id="train-name">Cat</span>
+        </div>
+      </div>
+
+      <p class="hint" id="train-hint">Drag the animal, or tap it and then tap a box 👇</p>
+
+      <div class="boxes">
+        <button class="dropzone dropzone--yes" id="zone-yes" data-answer="yes">
+          <span class="dropzone__icon">👍</span>
+          <span class="dropzone__label">Yes</span>
+        </button>
+        <button class="dropzone dropzone--no" id="zone-no" data-answer="no">
+          <span class="dropzone__icon">👎</span>
+          <span class="dropzone__label">No</span>
+        </button>
+      </div>
+
+      <p class="feedback" id="train-feedback" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- ============ AI TRIES ============ -->
+  <section class="screen" id="screen-test">
+    <div class="card">
+
+      <div class="topbar">
+        <span class="tag tag--blue">Step 2 of 2 · The AI tries!</span>
+        <span class="count" id="test-count">1 / 6</span>
+      </div>
+
+      <div class="progress" role="progressbar" aria-label="AI test progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="test-progressbar">
+        <div class="progress__fill progress__fill--blue" id="test-progress"></div>
+      </div>
+
+      <p class="hint">The robot learned from you. Was it right?</p>
+
+      <div class="stage">
+        <div class="animal-card animal-card--ai">
+          <span class="animal-card__emoji" id="test-emoji">🐟</span>
+          <span class="animal-card__name" id="test-name">Fish</span>
+        </div>
+
+        <div class="ai-says" id="test-says">
+          <span class="ai-says__robot">🤖</span>
+          <span class="ai-says__text">The AI says:</span>
+          <strong class="ai-says__answer" id="test-answer">Yes</strong>
+        </div>
+      </div>
+
+      <div class="boxes">
+        <button class="btn btn--yes" id="btn-right">✅ The AI is right!</button>
+        <button class="btn btn--no" id="btn-wrong">❌ The AI is wrong!</button>
+      </div>
+
+      <p class="feedback" id="test-feedback" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="screen" id="screen-results">
+    <div class="card card--results">
+
+      <h2 class="title title--sm">🎉 You did it!</h2>
+
+      <div class="score">
+        <div class="score__circle" id="score-circle">6 / 6</div>
+        <p class="score__label" id="score-label">Perfect!</p>
+      </div>
+
+      <div class="explain" id="explain"></div>
+
+      <div class="row">
+        <button class="btn btn--big btn--rainbow" id="btn-again">🔁 Play again</button>
+        <button class="btn btn--ghost" id="btn-new-question">🎲 New question</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script src="js/animals.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
